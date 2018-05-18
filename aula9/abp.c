@@ -3,7 +3,7 @@
  Algoritmos de manipulação de uma arvore binária de pesquisa ordenada por ordem
  crescente. Os nos da arvore são compactos e armazenam elementos inteiros.
 
- Nome :                                               NMEC :
+ Nome :Diego Caldeira Hernandez                              NMEC :77013
 
  Algorithms for manipulating a binary search tree sorted by increasing order. The
  tree nodes are compact and store integer elements.
@@ -51,7 +51,6 @@ static void Balance (PtABPNode *, int [], int , int);
 static void Display (PtABPNode, unsigned int);
 static void StoreFilePreOrder (PtABPNode, FILE *);
 static PtABPNode CopyRec (PtABPNode);
-static void PrintQueue(PtQueue pqueue);
 /*************************** Definição das Funções ****************************/
 
 int ABPErrorCode (void)
@@ -679,14 +678,21 @@ int ABPRank (PtABPNode proot, int pvalue)
 
 void ABPElements(PtABPNode proot, PtQueue pqueue, int plow, int phigh)
 { 
-	if(pqueue==NULL){
-		Error=NO_QUEUE;
+	if(proot==NULL){
+		Error=ABP_EMPTY;
 		return;
 	}
 	if(plow > phigh){
 		Error=INVALID;
 		return;
 	}
+	if(pqueue==NULL){
+		if((pqueue= QueueCreate(sizeof(int)))==NULL){
+			Error= NO_MEM;
+			return ;
+		}
+	}
+	Error=OK;
 	if(proot != NULL){
 		ABPElements((proot->PtLeft),pqueue,plow,phigh);
 		if((proot->Elem>=plow) && (proot->Elem<=phigh)) QueueEnqueue(pqueue, &(proot->Elem));
@@ -697,20 +703,15 @@ void ABPElements(PtABPNode proot, PtQueue pqueue, int plow, int phigh)
 }
 int ABPIsEvenOdd (PtABPNode proot)
 {
-	PtQueue Queue;
 	PtStack Stack;
 	PtABPNode Node= proot;
 	int Pair=0;
-	int elem;
+	int flag=0;
 	if(proot==NULL){
 		Error=ABP_EMPTY;
 		return 0;
 	}
 	if((Stack=StackCreate(sizeof(PtABPNode)))==NULL){
-		Error= NO_MEM;
-		return 0;
-	}
-	if((Queue= QueueCreate(sizeof(int)))==NULL){
 		Error= NO_MEM;
 		return 0;
 	}
@@ -724,27 +725,25 @@ int ABPIsEvenOdd (PtABPNode proot)
 			StackPop(Stack,&Node);
 			if(!StackIsEmpty(Stack)){
 				StackPop(Stack, &Node);
-				QueueEnqueue(Queue,&Node->Elem);
+				if(!flag){
+					if((Node->Elem)%2==0)Pair=1;
+					else Pair=0;
+					flag=1;
+				}
+				else{
+					if((Pair==1) && ((Node->Elem)%2)!=0)Pair=0;
+					else if((Pair==0) && ((Node->Elem)%2)==0)Pair=1;
+					else{
+						StackDestroy(&Stack);
+						return 0;
+					}
+				}
 				Node=Node->PtRight;
 				StackPush(Stack, &Node);
 			}
 		}
 	}
 	StackDestroy(&Stack);
-	PrintQueue(Queue);
-	QueueDequeue(Queue,&elem);
-	Error=OK;
-	if((elem)%2==0) Pair=1;
-	while(!QueueIsEmpty(Queue)){
-		QueueDequeue(Queue,&elem);
-		if((Pair==1) && (elem%2!=0)) Pair=0;
-		else if((Pair==0) && (elem%2==0)) Pair=1;
-		else{
-			QueueDestroy(&Queue);
-			return 0;
-		}
-	}
-	QueueDestroy(&Queue);
 	return 1;
 }
 
@@ -966,15 +965,4 @@ static PtABPNode CopyRec (PtABPNode proot)
     return Node;
 }
 
-static void PrintQueue(PtQueue pqueue){
-	if(pqueue ==NULL){
-		printf("Erro\n");
-		return;
-	}
-	int number;
-	while(!QueueIsEmpty(pqueue)){
-		QueueDequeue(pqueue, &number);
-		printf("%d ", number);
-	}
-	printf("\n");
-}
+
